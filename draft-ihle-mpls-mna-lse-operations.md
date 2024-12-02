@@ -19,11 +19,11 @@
 # Change the file extension to match the format (.xml for XML, etc...)
 #
 ###
-title: "TODO - Your title"
-abbrev: "TODO - Abbreviation"
-category: info
+title: "MPLS Network Action for Generalized LSE Operations"
+abbrev: "LSEOps"
+category: std
 
-docname: draft-todo-yourname-protocol-latest
+docname: draft-ihle-mpls-mna-lse-operations-latest
 submissiontype: IETF  # also: "independent", "editorial", "IAB", or "IRTF"
 number:
 date:
