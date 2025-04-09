@@ -1,0 +1,33 @@
+ MNA         ¬MNA         ¬MNA          MNA
+ LSR ───L1─── LSR ───L2─── LSR ───L3─── LSR 
+ R1          R2            R3           R4 
+ (1)         (2)           (3)          (4)
+
+
+MPLS label stacks: 
+(1)
+MPLS Label L1     -> pop + forward
+HBH-scoped NAS:    MOVE-N-LSE=1  -> process
+Select-scoped NAS: MOVE-N-LSE=2  -> process + pop
+MPLS Label L2     -> move to top
+MPLS Label L3     -> move to top
+MPLS Label L4     -> move to top
+MPLS Label L5     
+
+(2)
+MPLS Label L2     -> pop + forward
+MPLS Label L3
+MPLS Label L4
+HBH-scoped NAS
+MPLS Label L5
+
+(3)
+MPLS Label L3     -> pop + forward
+MPLS Label L4
+HBH-scoped NAS
+MPLS Label L5
+
+(4)
+MPLS Label L4     -> pop + forward
+HBH-scoped NAS:   MOVE-N-LSE=1  -> process
+MPLS Label L5     -> move to top
