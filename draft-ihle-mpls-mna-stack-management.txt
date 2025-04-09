@@ -369,16 +369,16 @@ Table of Contents
 6.  IANA Considerations
 
    This document requests that IANA allocates a new codepoint with the
-   name "LSE Operations" in the "Network Action Opcodes Registry"
+   name "Stack Management" in the "Network Action Opcodes Registry"
    introduced in [I-D.ietf-mpls-mna-hdr].
 
-              +============+================+===============+
-              | MNA Opcode | Description    | Reference     |
-              +============+================+===============+
-              | TBA1       | LSE Operations | This document |
-              +------------+----------------+---------------+
+             +============+==================+===============+
+             | MNA Opcode | Description      | Reference     |
+             +============+==================+===============+
+             | TBA1       | Stack Managament | This document |
+             +------------+------------------+---------------+
 
-                  Table 2: LSEOps Opcode IANA allocation.
+             Table 2: Stack Management Opcode IANA allocation.
 
 7.  References
 
