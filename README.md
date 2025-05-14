@@ -1,11 +1,13 @@
+<!-- regenerate: on (set to off if you edit this file) -->
+
 # MPLS Network Action for Stack Management
 
 This is the working area for the individual Internet-Draft, "MPLS Network Action for Stack Management".
 
-* [Editor's Copy](https://uni-tue-kn.github.io/draft-ihle-mpls-mna-stack-management/#go.draft-ihle-mpls-mna-stack-management.html)
+* [Editor's Copy](https://uni-tue-kn.github.io/draft-ihle-mpls-mna-lse-operations/#go.draft-ihle-mpls-mna-stack-management.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-ihle-mpls-mna-stack-management)
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-ihle-mpls-mna-stack-management)
-* [Compare Editor's Copy to Individual Draft](https://uni-tue-kn.github.io/draft-ihle-mpls-mna-stack-management/#go.draft-ihle-mpls-mna-stack-management.diff)
+* [Compare Editor's Copy to Individual Draft](https://uni-tue-kn.github.io/draft-ihle-mpls-mna-lse-operations/#go.draft-ihle-mpls-mna-stack-management.diff)
 
 
 ## Contributing
