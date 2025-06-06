@@ -5,7 +5,7 @@
 Multiprotocol Label Switching                                    F. Ihle
 Internet-Draft                                                  M. Menth
 Intended status: Standards Track                 University of Tuebingen
-Expires: 15 November 2025                                    14 May 2025
+Expires: 8 December 2025                                     6 June 2025
 
 
                 MPLS Network Action for Stack Management
@@ -57,7 +57,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 November 2025.
+   This Internet-Draft will expire on 8 December 2025.
 
 Copyright Notice
 
@@ -82,13 +82,21 @@ Table of Contents
      3.1.  Network Action Encoding
      3.2.  Processing
    4.  Use Cases and Examples
-     4.1.  POP-N-LSE: Stateless MNA-based Egress Protection (SMEP)
-     4.2.  MOVE-N-LSE: HBH Preservation
-   5.  Security Considerations
-   6.  IANA Considerations
-   7.  References
-     7.1.  Normative References
-     7.2.  Informative References
+     4.1.  MOVE-N-LSE
+       4.1.1.  HBH Preservation
+       4.1.2.  MOVE-N-LSE Operation for HBH Preservation
+       4.1.3.  Example
+     4.2.  POP-N-LSE
+       4.2.1.  Stateless MNA-based Egress Protection (SMEP)
+       4.2.2.  POP-N-LSE Operation for SMEP
+       4.2.3.  Example
+   5.  Implementation Status
+     5.1.  University of Tuebingen Implementation
+   6.  Security Considerations
+   7.  IANA Considerations
+   8.  References
+     8.1.  Normative References
+     8.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
@@ -103,18 +111,18 @@ Table of Contents
    This document introduces a network action for stack management
    operations.  Those operations include a MOVE-N-LSE and a POP-N-LSE
    operation.  With the MOVE-N-LSE operation, a number of N LSEs from
-   below the NAS are brought to the top-of-stack.  This can be leveraged
-   to enable for more efficient MPLS processing with MNA.  An example
-   for this is given in this document using a mechanism called HBH
-   preservation.  With the POP-N LSE operation, a number of N LSEs below
+   below the NAS is brought to the top-of-stack.  This can be leveraged
+   to enable more efficient MPLS processing with MNA.  An example for
+   this is given in this document using a mechanism called HBH
+   preservation.  With the POP-N-LSE operation, a number of N LSEs below
    the NAS is popped.  This can be used to facilitate mechanisms such as
    Stateless MNA-based Egress Protection (SMEP).  SMEP provides an
    alternative to the rerouting mechanism defined for the PLR in
-   [RFC8679] allowing the PLR to be stateless.  In this context, the
-   POP-N LSE operation eliminates the need to encode Bypass MPLS Labels
-   (BML) in the ancillary data of the SMEP network action.  However, the
-   stack management operations are not tied to specific use cases and
-   may be used in a more generalized way.
+   [RFC8679] allowing the PLR to be stateless by carrying Bypass MPLS
+   Labels (BML) in the stack.
+
+   However, the stack management operations are not tied to specific use
+   cases and may also be applied for various other use cases.
 
 2.  Conventions and Definitions
 
@@ -155,7 +163,7 @@ Table of Contents
    The network action for stack management operations is encoded as
    follows:
 
-   *  Network Action Indication: The stack management network action is
+   *  Network action indication: The stack management network action is
       indicated by opcode TBA1.
 
    *  Format: The stack management network action MUST be encoded using
@@ -166,21 +174,24 @@ Table of Contents
       scope, i.e., in the select, HBH, and I2E scope.  The scope depends
       on the use case.
 
-   *  Ancillary Data: The stack management network actions requires four
+   *  Ancillary data: The stack management network action requires four
       bits of in-stack ancillary data per operation (pop and move) to
-      encode the parameter N.  The parameter N corresponds to the number
-      of LSEs to apply the operation to.  For example, the POP-N-LSE
-      operation with N=2 pops 2 LSEs that follow after the NAS.  In
-      Format B, the four least-signifact bits of the ancillary data
-      field contain the number of LSEs for the MOVE-N-LSE operation.
-      The next four bits contain the number of LSEs for the POP-N-LSE
-      operation.  All other ancillary data bits MUST be set to zero and
-      are reserved for future use.  For Format C, the same encoding of
-      POP-N-LSEs and MOVE-N-LSEs applies to the first data field of the
-      LSE.  The second data field, i.e., the 4-bit wide ancillary data
-      field, MUST be set to zero and is reserved for future use.
+      encode the number of labels, i.e., the numbers MOVE-N and POP-N.
 
-   *  Post-Stack Data: None.
+      -  In Format B, the four least-significant bits of the ancillary
+         data field contain the value of MOVE-N.  The next four bits
+         contain the value of POP-N.  All other ancillary data bits MUST
+         be set to zero and are reserved for future use.
+
+      -  In Format C, the same encoding of POP-N-LSEs and MOVE-N-LSEs
+         applies to the first data field of the LSE.  The second data
+         field, i.e., the 4-bit wide ancillary data field, MUST be set
+         to zero and is reserved for future use.
+
+   *  Post-stack data: None.
+
+   Figure 1 and Figure 2 illustrate the stack management operation
+   encoding in Format B and C.
 
     0                   1                   2                   3
     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -203,114 +214,77 @@ Table of Contents
    A node that processes the stack management network action MUST
    perform the MOVE-N-LSE and POP-N-LSE operation according to the
    corresponding parameter N > 0.  If N = 0, the corresponding operation
-   is not performed.
+   is not applied.
+
+   *  For MOVE-N > 0, MOVE-N LSEs below the NAS are brought to the top-
+      of-stack.
+
+   *  For POP-N > 0, POP-N LSEs below the NAS are popped.
 
    The ingress LER MUST ensure that no invalid state, e.g., a MOVE-N-LSE
-   operation with N > #LSEs below the NAS, results from the processing
-   of the stack management network action.
+   operation with MOVE-N > #LSEs below the NAS, results from the
+   processing of the stack management network action.
+
+   If multiple NAS with the stack management network action are present
+   in the stack and are processed by a single node, all values for
+   MOVE-N or POP-N are summed up respectively.  The operation, i.e., pop
+   or move, is then applied based on the summed up value.
 
 4.  Use Cases and Examples
 
-   This section illustrates one use case for each operation in an
+   This section explains one use case for each operation and illustrates
+   it in an example.
+
+4.1.  MOVE-N-LSE
+
+   First, we describe the concept of HBH preservation.  Then, we explain
+   how the MOVE-N-LSE operation is used for this concept, and give an
    example.
 
-4.1.  POP-N-LSE: Stateless MNA-based Egress Protection (SMEP)
+4.1.1.  HBH Preservation
 
-   Stateless MNA-based Egress Protection (SMEP) is a proposed mechanism
-   within the MNA framework
-   [I-D.ihle-mpls-mna-stateless-egress-protection-00].  SMEP encodes
-   egress protection information such as Bypass MPLS Labels (BMLs) in
-   the MPLS label stack as network actions.  This approach eliminates
-   the need for the Point of Local Repair (PLR) to maintain bypass
-   forwarding states or engage in additional signaling for bypass tunnel
-   mappings.  Instead, all necessary information is delivered to the PLR
-   via the MPLS stack enabling failover to alternative egress paths in
-   case of egress node or link failures.
+   In the MNA framework, each node must be able to access the HBH-scoped
+   Network Action Substack (NAS).  The HBH-scoped NAS must be within the
+   readable label depth (RLD) of each node.  To achieve this, redundant
+   copies of the NAS are placed at different positions in the MPLS stack
+   [I-D.ietf-mpls-mna-hdr].  This increases the overall stack size.
+   Further, routers must scan through unrelated stack entries to find
+   the HBH-scoped NAS.  This adds parsing overhead and is difficult on
+   hardware with limited RLD.
 
-   However, in the proposed SMEP network action encoding, the 20 bit
-   BMLs are split across the AD fields of a network action.  This
-   requires the PLR to extract the BML from the network action first.
-   With the POP-N-LSE operation, the BMLs are contained as forwarding
-   LSEs in the MPLS stack without the need to encode the bypass tunnel
-   information in the AD fields of a network action.  An example is
-   given in Figure 3.
+   The HBH preservation mechanism keeps the HBH-scoped NAS within reach
+   of all nodes by placing the NAS always below the top-of-stack label.
+   When a node pops the top label, it moves the next forwarding label
+   below the NAS to the top.  This prevents the NAS from being exposed
+   and removed.  Nodes can process it without scanning through unrelated
+   labels.  This avoids redundant copies and reduces RLD pressure
+   [IhMe25-2].
 
+4.1.2.  MOVE-N-LSE Operation for HBH Preservation
 
-                                   /--L3'-- LSR ---L3''--- egress R3''
-                                  /         R3'
-                                 LSR
-   Ingress ───L1─── LSR ───L2───  R2  ───L3─── egress R3
-     LER            R1          (PLR)
+   The stack management network action with the MOVE-N-LSE operation is
+   added to the HBH-scoped NAS with MOVE-N = 1 to apply the HBH
+   preservation mechanism.  Each node popping the top-of-stack label and
+   processing this action brings one LSE from below the NAS to the top.
+   This prevents the HBH-scoped NAS from being exposed to the top.
 
+   However, this mechanism poses a challenge when there are MNA-
+   incapable nodes on the path.  An MNA-incapable node pops the top-of-
+   stack forwarding label and exposes the HBH-scoped NAS to the top,
+   leading to packet drop at the next hop.  To fix this, the MOVE-N-LSE
+   operation can be leveraged to bring LSEs at the preceding node of an
+   MNA-incapable node to the top using a select-scoped NAS.  This way,
+   forwarding labels for upcoming MNA-incapable nodes are brought to the
+   top and the HBH-scoped NAS is never exposed.  The MNA-capabilities
+   are signaled to the ingress LER.  Therefore, the ingress LER places a
+   select-scoped network action for the preceding node of MNA-incapable
+   nodes in the MPLS stack.  No information about MNA capabilities of
+   neighboring nodes is required in a transit node as all node
+   capabilities are signaled to the ingress LER.
 
-    0                   1                   2                   3
-    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |      MPLS-Label = L1                  | TC  |S|    TTL        |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |      MPLS-Label = L2                  | TC  |S|    TTL        |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |      MPLS-Label = L3                  | TC  |S|    TTL        |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |      MNA-Label=bSPL (TBA)             | TC  |S|    TTL        |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |Opcode=MGMT  |Reserved |POP-N=2| MOVE-N|R|IHS|S|U| NASL=0|NAL=0|
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |      MPLS-Label = L3'                 | TC  |S|    TTL        |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |      MPLS-Label = L3''                | TC  |S|    TTL        |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+4.1.3.  Example
 
-         Figure 3: Example using the POP-N-LSE operation for SMEP.
-
-   The example network contains an LSP R1-R2-R3 and a bypass tunnel R2-
-   R3'-R3''.  The label stack contains the forwarding labels L1, L2, L3,
-   L3', and L3''.  If there is no egress failure, the LSR R2 executes
-   the POP-N-LSE action and pops the BMLs L3' and L3''.  The packet is
-   forwarded as usual according to the top-of-stack label L3.  If the
-   LSR R2 detects an egress failure it becomes the PLR.  The POP-N-LSE
-   action is ignored and the NAS is popped along with the top-of-stack
-   label.  This time, the BMLs L3' and L3'' are at the top-of-stack.
-   The packet is forwarded according to those labels to the alternative
-   egress node R3''.  This mechanism requires configuration or an
-   indication to only execute the POP-N-LSE operation if there is no
-   egress failure detected.
-
-4.2.  MOVE-N-LSE: HBH Preservation
-
-   An efficient way to structure the MPLS stack with different NAS is to
-   place to HBH-scoped NAS always below the top-of-stack forwarding
-   label.  This reduces the required allocation of resources to a
-   minimum as no irrelevant LSEs are parsed to find the HBH NAS located
-   deeper in the stack.  Placing the HBH-scoped NAS close to the top and
-   popping the top-of-stack forwarding label exposes the HBH-scoped NAS
-   to the top which results in popping this NAS.  To prevent this, an
-   LSR MAY bring the forwarding label from below the NAS to the top-of-
-   stack using the MOVE-N-LSE operation.
-
-   In the following example, the stack management network action with
-   the MOVE-N-LSE operation is added to the HBH-scoped NAS if one is
-   present in the stack.  This brings one LSE from below the NAS to the
-   top.  The MOVE-N-LSEs operation is only applied if the top-of-stack
-   forwarding label is popped.  However, this mechanism poses a
-   challenge when there are MNA-incapable nodes on the path.  An MNA-
-   incapable node pops the top-of-stack forwarding label and exposes the
-   HBH-scoped NAS to the top, leading to packet drop at the next hop.
-   To fix this, the MOVE-N-LSE operation can be leveraged to bring N
-   LSEs at the preceding node of an MNA-incapable node to the top using
-   a select-scoped NAS.  This way, forwarding labels for the upcoming N
-   MNA-incapable nodes are brought to the top and the HBH-scoped NAS is
-   never exposed to the top.  The MNA-capabilities are signaled to the
-   ingress LER.  Therefore, the ingress LER places a select-scoped
-   network action for the preceding node of MNA-incapable nodes in the
-   MPLS stack.  No information about MNA capabilities of neighboring
-   nodes is required in a transit node as all node capabilities are
-   signalled to the ingress LER.
-
-   If multiple NAS with the stack management network action and N > 0
-   for the MOVE-N-LSE operation are present in the stack, all values for
-   N are summed up and that number of LSEs below the last processed NAS
-   is brought to the top.  An example is illustrated in Figure 4.
+   An example is illustrated in Figure 3.
 
     MNA         ¬MNA         ¬MNA          MNA
     LSR ───L1─── LSR ───L2─── LSR ───L3─── LSR
@@ -346,27 +320,144 @@ Table of Contents
    HBH-scoped NAS:   MOVE-N-LSE=1  -> process
    MPLS Label L5     -> move to top
 
-             Figure 4: Example using the MOVE-N-LSE operation.
+             Figure 3: Example using the MOVE-N-LSE operation.
 
-   In Figure 4, a MNA-capable node is followed by two MNA-incapable
-   nodes.  Therefore, the stack management network action with N=2 for
-   the MOVE-N-LSE operation is pushed by the ingress LER as a select-
-   scoped NAS for the LSR R1.  Further, to enable the HBH preservation
-   mechanism, the stack management action with N=1 for the MOVE-N-LSEs
-   operation is added to the HBH-scoped NAS.  LSR R1 brings three LSEs
-   to the top-of-stack, two from the MOVE-N-LSE operation in the select-
-   scoped NAS and one from the HBH-scoped NAS.  At the MNA-incapable
-   LSRs R2 and R3, the forwarding label is popped without exposing the
-   HBH-scoped NAS to the top.  Finally, the MNA-capable LSR R4 processes
-   the HBH-scoped NAS and brings one LSE from below the NAS to the top
-   as indicated in the HBH-scoped NAS.
+   In Figure 3, a MNA-capable node is followed by two MNA-incapable
+   nodes.  Therefore, the stack management network action with MOVE-N =
+   2 for the MOVE-N-LSE operation is pushed by the ingress LER as a
+   select-scoped NAS for the LSR R1.  Further, to enable the HBH
+   preservation mechanism, the stack management action with MOVE-N = 1
+   for the MOVE-N-LSEs operation is added to the HBH-scoped NAS.  R1
+   brings three LSEs to the top-of-stack, two from the MOVE-N-LSE
+   operation in the select-scoped NAS and one from the HBH-scoped NAS.
+   At the MNA-incapable LSRs R2 and R3, the forwarding label is popped
+   without exposing the NAS to the top.  Finally, the MNA-capable LSR R4
+   processes the HBH-scoped NAS and brings one LSE from below the NAS to
+   the top.
 
-5.  Security Considerations
+4.2.  POP-N-LSE
+
+   First, we describe the concept of Stateless MNA-based Egress
+   Protection (SMEP).  Then, we explain how the POP-N-LSE operation is
+   used for this concept, and give an example.
+
+4.2.1.  Stateless MNA-based Egress Protection (SMEP)
+
+   The egress protection framework defined in [RFC8679] is
+   comprehensive.  It provides a mechanism for rerouting traffic in the
+   event of an egress failure, and explains how rerouted services and
+   their associated context can be restored.  Stateless MNA-based Egress
+   Protection (SMEP) provides an alternative to the rerouting mechanism
+   defined for the PLR, allowing the PLR to be stateless
+   [I-D.ihle-mpls-mna-stateless-egress-protection-00].  Thus, the PLR
+   does not need to maintain a table that maps transport tunnels to
+   backup paths.  Likewise, the PLR is not involved in the signaling of
+   such information.  Instead, this information is supplied from the
+   ingress to the PLR in the network action.  Signaling is only needed
+   between ingress, egress, and the protector, but not with the PLR
+   anymore.
+
+   However, in the proposed SMEP network action encoding in
+   [I-D.ihle-mpls-mna-stateless-egress-protection-00], the 20 bit BMLs
+   are split across the AD fields of a network action.  This requires
+   the PLR to extract the BML from the network action.
+
+4.2.2.  POP-N-LSE Operation for SMEP
+
+   The POP-N-LSE operation simplifies the application of SMEP.  The BMLs
+   are contained as forwarding LSEs in the MPLS stack without the need
+   to encode the bypass tunnel information in the AD fields of a network
+   action.  The processing at the PLR is as follows:
+
+   1.  If the PLR does not detect an egress failure
+
+       *  The PLR executes the POP-N-LSE action and pops all BMLs.
+
+       *  The packet is forwarded as usual to the egress node.
+
+   2.  If the PLR detects an egress failure
+
+       *  The POP-N-LSE action is ignored and is popped along with the
+          top-of-stack label.
+
+       *  The BML is now the top-of-stack label.  The packet is
+          forwarded to the protector based on the BML.
+
+4.2.3.  Example
+
+   An example of the POP-N-LSE Operation for SMEP is given in Figure 4.
+
+
+                                   /--L3'-- LSR ---L3''--- egress R3''
+                                  /         R3'
+                                 LSR
+   Ingress ───L1─── LSR ───L2───  R2  ───L3─── egress R3
+     LER            R1          (PLR)
+
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L1                  | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L2                  | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L3                  | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MNA-Label=bSPL (TBA)             | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Opcode=MGMT  |Reserved |POP-N=2| MOVE-N|R|IHS|S|U| NASL=0|NAL=0|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L3'                 | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L3''                | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+         Figure 4: Example using the POP-N-LSE operation for SMEP.
+
+   The example network contains an LSP R1-R2-R3 and a bypass tunnel R2-
+   R3'-R3''.  The label stack contains the forwarding labels L1, L2, L3,
+   L3', and L3''.  If there is no egress failure, the LSR R2 executes
+   the POP-N-LSE action with POP-N = 2 and pops the BMLs L3' and L3''.
+   The packet is forwarded as usual according to the top-of-stack label
+   L3.  If the LSR R2 detects an egress failure it becomes the PLR.  The
+   POP-N-LSE action is ignored and the NAS is popped along with the top-
+   of-stack label.  This time, the BMLs L3' and L3'' are at the top-of-
+   stack.  The packet is forwarded according to those labels to the
+   alternative egress node R3''.
+
+5.  Implementation Status
+
+   [Note to the RFC Editor - remove this section before publication, as
+   well as remove the reference to [rfc7942]]
+
+   This section records the status of known implementations of the
+   protocol defined by this specification at the time of posting of this
+   Internet-Draft, and is based on a proposal described in [rfc7942].
+   The description of implementations in this section is intended to
+   assist the IETF in its decision processes in progressing drafts to
+   RFCs.  Please note that the listing of any individual implementation
+   here does not imply endorsement by the IETF.  Furthermore, no effort
+   has been spent to verify the information presented here that was
+   supplied by IETF contributors.  This is not intended as, and must not
+   be construed to be, a catalog of available implementations or their
+   features.  Readers are advised to note that other implementations may
+   exist.
+
+5.1.  University of Tuebingen Implementation
+
+   The stack management network action defined in this document has been
+   implemented using the MOVE-N-LSE operation for HBH preservation with
+   a P4 pipeline [IhMe25-2].  The implementation code can be found at
+   https://github.com/uni-tue-kn/P4-MNA (https://github.com/uni-tue-kn/
+   P4-MNA).
+
+6.  Security Considerations
 
    The security issues discussed in [I-D.ietf-mpls-mna-hdr] apply to
    this document.
 
-6.  IANA Considerations
+7.  IANA Considerations
 
    This document requests that IANA allocates a new codepoint with the
    name "Stack Management" in the "Network Action Opcodes Registry"
@@ -375,14 +466,14 @@ Table of Contents
              +============+==================+===============+
              | MNA Opcode | Description      | Reference     |
              +============+==================+===============+
-             | TBA1       | Stack Managament | This document |
+             | TBA1       | Stack Management | This document |
              +------------+------------------+---------------+
 
              Table 2: Stack Management Opcode IANA allocation.
 
-7.  References
+8.  References
 
-7.1.  Normative References
+8.1.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -393,7 +484,7 @@ Table of Contents
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
 
-7.2.  Informative References
+8.2.  Informative References
 
    [I-D.ietf-mpls-mna-hdr]
               Rajamanickam, J., Gandhi, R., Zigler, R., Song, H., and K.
@@ -408,6 +499,16 @@ Table of Contents
               draft-ihle-mpls-mna-stateless-egress-protection-00, 24
               September 2024, <https://datatracker.ietf.org/doc/html/
               draft-ihle-mpls-mna-stateless-egress-protection-00>.
+
+   [IhMe25-2] Ihle, F. and M. Menth, "Reduced Hardware Requirements for
+              MPLS Network Actions Through Stack Management", 6 June
+              2025.  Accepted for publication in ACM/IRTF Applied
+              Networking Research Workshop.
+
+   [rfc7942]  Sheffer, Y. and A. Farrel, "Improving Awareness of Running
+              Code: The Implementation Status Section", BCP 205,
+              RFC 7942, DOI 10.17487/RFC7942, July 2016,
+              <https://www.rfc-editor.org/rfc/rfc7942>.
 
    [RFC8679]  Shen, Y., Jeganathan, M., Decraene, B., Gredler, H.,
               Michel, C., and H. Chen, "MPLS Egress Protection
