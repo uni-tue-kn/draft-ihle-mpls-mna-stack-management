@@ -60,9 +60,7 @@ The MPLS Network Action (MNA) framework provides a general mechanism for the enc
 This document introduces a network action to the MPLS Network Action (MNA) framework for stack management operations including MOVE-N-LSE and POP-N-LSE.
 The MOVE-N-LSE operation elevates a specified number of LSEs within the stack and the POP-N-LSE operation removes a specified number of LSEs.
 The stack management operations can be used to facilitate various applications.
-Two examples are given in this document.
-First, a mechanism called HBH preservation which reduces the readable label depth (RLD) requirement in nodes.
-Second, a mechanism that facilitates stateless MNA-based egress protection (SMEP).
+As an example, a mechanism called HBH preservation which reduces the readable label depth (RLD) requirement in nodes is presented.
 --- middle
 
 # Introduction
@@ -73,18 +71,14 @@ These network actions are processed by all nodes on a path (hop-by-hop), by only
 This document introduces a network action for stack management operations.
 Those operations include a MOVE-N-LSE and a POP-N-LSE operation.
 
-With the MOVE-N-LSE operation, a number of N LSEs from below the NAS is brought to the top-of-stack.
 The MNA framework's processing introduces an increased stack size and parsing overhead for hardware.
 Here, redundant copies of HBH-scoped NAS may have to be inserted into the MPLS stack {{?I-D.ietf-mpls-mna-hdr}}.
 Further, nodes may have to parse LSEs irrelevant to them to find the HBH-scoped NAS in the stack {{IhMe25-2}}.
 This poses a challenge to nodes with a limited readable label depth (RLD).
 The MOVE-N-LSE operation can be leveraged to reduce the required RLD by reorganizing the MPLS stack during forwarding.
+With the MOVE-N-LSE operation, a number of LSEs from below the NAS is brought to the top-of-stack.
 An example for this is given in this document using a mechanism called HBH preservation {{IhMe25-2}}.
-
-With the POP-N-LSE operation, a number of N LSEs below the NAS is popped.
-This can be used to facilitate mechanisms such as Stateless MNA-based Egress Protection (SMEP).
-In the egress protection framework {{?RFC8679}}, a Point of Local Repair (PLR) reroutes traffic in the event of an egress failure using local bypass forwarding state.
-SMEP provides an alternative to the rerouting mechanism defined for the PLR in {{?RFC8679}} allowing the PLR to be stateless by carrying Bypass MPLS Labels (BML) in the stack.
+With the POP-N-LSE operation, a number of LSEs below the NAS is popped.
 
 Those stack management operations are not tied to specific use cases and may also be applied for various other use cases.
 
@@ -97,11 +91,9 @@ This document makes use of the terms defined in {{?I-D.ietf-mpls-mna-hdr}}.
 
 Further abbreviations used in this document:
 
-| Abbreviation | Meaning                               | Reference                                             |
-| ------------ | ------------------------------------- | ----------------------------------------------------- |
-| BML          | Bypass MPLS Label                     | {{?I-D.ihle-mpls-mna-stateless-egress-protection-00}} |
-| SMEP         | Stateless MNA-based Egress Protection | {{?I-D.ihle-mpls-mna-stateless-egress-protection-00}} |
-| RLD          | Readable Label Depth                  | {{?I-D.ietf-mpls-mna-fwk}}                            |
+| Abbreviation | Meaning              | Reference                  |
+| ------------ | -------------------- | -------------------------- |
+| RLD          | Readable Label Depth | {{?I-D.ietf-mpls-mna-fwk}} |
 {: #table_abbrev title="Abbreviations."}
 
 # Stack Management Operations
@@ -151,7 +143,7 @@ If multiple NAS containing the stack management network action are processed by 
 The operation, i.e., pop or move, is then applied based on the summed up value.
 
 # Use Cases and Examples
-This section explains one use case for each operation and illustrates it with an example.
+This section illustrates each operation with an example.
 
 ## MOVE-N-LSE
 First, we describe the concept of HBH preservation.
@@ -207,51 +199,20 @@ At the MNA-incapable LSRs R2 and R3, the forwarding label is popped without expo
 Finally, the MNA-capable LSR R4 processes the HBH-scoped NAS and brings one LSE from below the NAS to the top.
 
 ## POP-N-LSE
-First, we describe the concept of Stateless MNA-based Egress Protection (SMEP).
-Then, we explain how the POP-N-LSE operation is used for this concept, and give an example.
-
-### Stateless MNA-based Egress Protection (SMEP)
-The egress protection framework defined in {{?RFC8679}} provides a mechanism for rerouting traffic in the event of an egress failure and explains how to restore rerouted services and their associated context.
-This mechanism relies on a Point of Local Repair (PLR) node to detect and repair local failures.
-The PLR node maintains the bypass forwarding state which maps specific labels to bypass tunnels.
-These tunnels are signaled using existing mechanisms, i.e. via an Interior Gateway Protocol (IGP) or topology-driven label distribution protocols such as Label Distribution Protocol (LDP).
-
-Stateless MNA-based Egress Protection (SMEP) provides an alternative to the rerouting mechanism defined for the PLR, allowing the PLR to be stateless {{?I-D.ihle-mpls-mna-stateless-egress-protection-00}}.
-Thus, the PLR does not need to maintain a table that maps transport tunnels to backup paths.
-Likewise, the PLR is not involved in the signaling of such information.
-Instead, this information is supplied from the ingress to the PLR in the MPLS stack.
-Signaling is only needed between ingress, egress, and the protector, but not with the PLR anymore.
-
-### POP-N-LSE Operation for SMEP
-The POP-N-LSE operation facilitates the application of SMEP.
-To that end, the bypass MPLS labels (BMLs) which route the packet to the protector are contained in the MPLS stack.
-Further, the POP-N-LSE operation is added directly above the BMLs where `POP-N` is the number of labels in the bypass tunnel.
-The processing at the PLR is as follows:
-
-1. If the PLR does not detect an egress failure
-   - The PLR executes the POP-N-LSE action and pops all BMLs.
-   - The packet is forwarded as usual to the egress node.
-2. If the PLR detects an egress failure
-   - The POP-N-LSE action is ignored and is popped along with the top-of-stack label.
-   - The BML is now the top-of-stack label. The packet is forwarded to the protector based on the BML.
+In this section, we give an example for the POP-N-LSE operation.
+Another application of this operation can be found in {{?I-D.ihle-mpls-mna-stateless-egress-protection}}.
 
 ### Example
-An example of the POP-N-LSE Operation for SMEP is given in {{fig-smep}}.
+{{fig-pop-n}} shows an MPLS stack containing the stack management network action with `POP-N = 2.`
+The next node that pops the top-of-stack label will process the NAS containing the stack management network action.
+Therefore, two LSEs after the NAS, i.e., label L2 and L3 will be popped.
+Since the NAS is exposed to the top, it is popped as well.
+The resulting stack contains only forwarding label L4.
 
 ~~~~
-{::include ./drawings/smep.txt}
+{::include ./drawings/pop-n.txt}
 ~~~~
-{: #fig-smep title="Example using the POP-N-LSE operation for SMEP."}
-
-The example network contains an LSP R1-R2-R3 and a bypass tunnel R2-R3'-R3''.
-The label stack contains the forwarding labels L1, L2, L3, L3', and L3'', and the POP-N-LSE operation destined for the PLR.
-If there is no egress failure, the LSR R2 executes the POP-N-LSE action with `POP-N = 2` and pops the BMLs L3' and L3''.
-R2 pops the top-of-stack label L3 and forwards the packet as usual to the egress.
-
-If the LSR R2 detects an egress failure, it becomes the PLR.
-The POP-N-LSE action is ignored and the NAS is popped along with the top-of-stack label.
-This time, the BMLs L3' and L3'' are at the top-of-stack.
-The packet is forwarded according to those labels to the alternative egress node R3''.
+{: #fig-pop-n title="Example using the MOVE-N-LSE operation."}
 
 # Implementation Status
 
