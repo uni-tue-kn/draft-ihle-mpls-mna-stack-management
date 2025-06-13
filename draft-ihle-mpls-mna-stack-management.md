@@ -212,7 +212,7 @@ The resulting stack contains only forwarding label L4.
 ~~~~
 {::include ./drawings/pop-n.txt}
 ~~~~
-{: #fig-pop-n title="Example using the MOVE-N-LSE operation."}
+{: #fig-pop-n title="Example using the POP-N-LSE operation."}
 
 # Implementation Status
 
