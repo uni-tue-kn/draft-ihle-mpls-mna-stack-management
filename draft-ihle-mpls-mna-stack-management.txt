@@ -372,7 +372,7 @@ Table of Contents
    |      MPLS-Label = L4                  | TC  |S|    TTL        |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-             Figure 4: Example using the MOVE-N-LSE operation.
+              Figure 4: Example using the POP-N-LSE operation.
 
 5.  Implementation Status
 
