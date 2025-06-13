@@ -1,0 +1,493 @@
+
+
+
+
+Multiprotocol Label Switching                                    F. Ihle
+Internet-Draft                                                  M. Menth
+Intended status: Standards Track                 University of Tuebingen
+Expires: 15 December 2025                                   13 June 2025
+
+
+                MPLS Network Action for Stack Management
+              draft-ihle-mpls-mna-stack-management-latest
+
+Abstract
+
+   The MPLS Network Action (MNA) framework provides a general mechanism
+   for the encoding and processing of network actions and their data.
+   This document introduces a network action to the MPLS Network Action
+   (MNA) framework for stack management operations including MOVE-N-LSE
+   and POP-N-LSE.  The MOVE-N-LSE operation elevates a specified number
+   of LSEs within the stack and the POP-N-LSE operation removes a
+   specified number of LSEs.  The stack management operations can be
+   used to facilitate various applications.  As an example, a mechanism
+   called HBH preservation which reduces the readable label depth (RLD)
+   requirement in nodes is presented.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   The latest revision of this draft can be found at https://uni-tue-
+   kn.github.io/draft-ihle-mpls-mna-lse-operations/draft-ihle-mpls-mna-
+   lse-operations.html.  Status information for this document may be
+   found at https://datatracker.ietf.org/doc/draft-ihle-mpls-mna-stack-
+   management/.
+
+   Discussion of this document takes place on the Multiprotocol Label
+   Switching Working Group mailing list (mailto:mpls@ietf.org), which is
+   archived at https://mailarchive.ietf.org/arch/browse/mpls/.
+   Subscribe at https://www.ietf.org/mailman/listinfo/mpls/.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/uni-tue-kn/draft-ihle-mpls-mna-lse-operations.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 15 December 2025.
+
+Copyright Notice
+
+   Copyright (c) 2025 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction
+   2.  Conventions and Definitions
+     2.1.  Abbreviations
+   3.  Stack Management Operations
+     3.1.  Network Action Encoding
+     3.2.  Processing
+   4.  Use Cases and Examples
+     4.1.  MOVE-N-LSE
+       4.1.1.  HBH Preservation
+       4.1.2.  MOVE-N-LSE Operation for HBH Preservation
+       4.1.3.  Example
+     4.2.  POP-N-LSE
+       4.2.1.  Example
+   5.  Implementation Status
+     5.1.  University of Tuebingen Implementation
+   6.  Security Considerations
+   7.  IANA Considerations
+   8.  References
+     8.1.  Normative References
+     8.2.  Informative References
+   Acknowledgments
+   Authors' Addresses
+
+1.  Introduction
+
+   The MPLS Network Action (MNA) framework encodes network actions and
+   their parameters for processing by MPLS nodes.
+   [I-D.ietf-mpls-mna-hdr] defines the encoding of such network actions
+   and their data as in-stack data (ISD) in a so-called Network Action
+   Substack (NAS).  These network actions are processed by all nodes on
+   a path (hop-by-hop), by only selected nodes, or on an ingress-to-
+   egress basis (I2E).  This document introduces a network action for
+   stack management operations.  Those operations include a MOVE-N-LSE
+   and a POP-N-LSE operation.
+
+   The MNA framework's processing introduces an increased stack size and
+   parsing overhead for hardware.  Here, redundant copies of HBH-scoped
+   NAS may have to be inserted into the MPLS stack
+   [I-D.ietf-mpls-mna-hdr].  Further, nodes may have to parse LSEs
+   irrelevant to them to find the HBH-scoped NAS in the stack
+   [IhMe25-2].  This poses a challenge to nodes with a limited readable
+   label depth (RLD).  The MOVE-N-LSE operation can be leveraged to
+   reduce the required RLD by reorganizing the MPLS stack during
+   forwarding.  With the MOVE-N-LSE operation, a number of LSEs from
+   below the NAS is brought to the top-of-stack.  An example for this is
+   given in this document using a mechanism called HBH preservation
+   [IhMe25-2].  With the POP-N-LSE operation, a number of LSEs below the
+   NAS is popped.
+
+   Those stack management operations are not tied to specific use cases
+   and may also be applied for various other use cases.
+
+2.  Conventions and Definitions
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+2.1.  Abbreviations
+
+   This document makes use of the terms defined in
+   [I-D.ietf-mpls-mna-hdr].
+
+   Further abbreviations used in this document:
+
+     +==============+======================+=========================+
+     | Abbreviation | Meaning              | Reference               |
+     +==============+======================+=========================+
+     | RLD          | Readable Label Depth | [I-D.ietf-mpls-mna-fwk] |
+     +--------------+----------------------+-------------------------+
+
+                          Table 1: Abbreviations.
+
+3.  Stack Management Operations
+
+   This section describes the stack management network action encoding
+   and the processing in an LSR.
+
+3.1.  Network Action Encoding
+
+   The network action for stack management operations is encoded as
+   follows:
+
+   *  Network action indication: The stack management network action is
+      indicated by opcode TBA1.
+
+   *  Format: The stack management network action MUST be encoded using
+      a Format B or a Format C LSE as defined in
+      [I-D.ietf-mpls-mna-hdr], see Figure 1 and Figure 2.
+
+   *  Scope: The stack management network action can be used in any
+      scope, i.e., in the select, HBH, and I2E scope.  The scope depends
+      on the use case.
+
+   *  Ancillary data: The stack management network action encodes the
+      number of labels for each operation, i.e, the numbers MOVE-N and
+      POP-N, in a four bit field of in-stack ancillary data.
+
+      -  In Format B, the four least-significant bits of the ancillary
+         data field contain the value of MOVE-N.  The next four bits
+         contain the value of POP-N.  All other ancillary data bits MUST
+         be set to zero and are reserved for future use.
+
+      -  In Format C, the same encoding of POP-N-LSEs and MOVE-N-LSEs
+         applies to the first data field of the LSE.  The second data
+         field, i.e., the 4-bit wide ancillary data field, MUST be set
+         to zero and is reserved for future use.
+
+   *  Post-stack data: None.
+
+   Figure 1 and Figure 2 illustrate the stack management operation
+   encoding in Format B and C.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Opcode=MGMT  |Reserved | POP-N | MOVE-N|R|IHS|S|U| NASL  |NAL=0|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+         Figure 1: MNA for Stack Management Operations in Format B.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Opcode=MGMT  |    Reserved   | POP-N | MOVE-N|S|U|  Res  |NAL=0|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+         Figure 2: MNA for Stack Management Operations in Format C.
+
+3.2.  Processing
+
+   A node that processes the stack management network action MUST
+   perform the MOVE-N-LSE and POP-N-LSE operation according to the
+   corresponding parameter N > 0.  If N = 0, the corresponding operation
+   is not applied.
+
+   *  For MOVE-N > 0, MOVE-N LSEs below the NAS are brought to the top-
+      of-stack.
+
+   *  For POP-N > 0, POP-N LSEs below the NAS are popped.
+
+   The ingress LER MUST ensure that no invalid state, e.g., a MOVE-N-LSE
+   operation with MOVE-N > #LSEs below the NAS, results from the
+   processing of the stack management network action.
+
+   If multiple NAS containing the stack management network action are
+   processed by a node, e.g., in a select-scoped and in an HBH-scoped
+   NAS, the values for MOVE-N and POP-N of each NAS are summed up.  The
+   operation, i.e., pop or move, is then applied based on the summed up
+   value.
+
+4.  Use Cases and Examples
+
+   This section illustrates each operation with an example.
+
+4.1.  MOVE-N-LSE
+
+   First, we describe the concept of HBH preservation.  Then, we explain
+   how the MOVE-N-LSE operation is used for this concept, and give an
+   example.
+
+4.1.1.  HBH Preservation
+
+   In the MNA framework, each node must be able to access the HBH-scoped
+   NAS.  The HBH-scoped NAS must be within the RLD of each node.  To
+   achieve this, redundant copies of the NAS are placed at different
+   positions in the MPLS stack [I-D.ietf-mpls-mna-hdr].  This increases
+   the overall stack size.  Further, routers must scan through unrelated
+   stack entries to find the HBH-scoped NAS.  This adds parsing overhead
+   and is difficult on hardware with limited RLD.
+
+   The HBH preservation mechanism keeps the HBH-scoped NAS within reach
+   of all nodes by placing the NAS always below the top-of-stack label.
+   When a node pops the top label, it moves the next forwarding label
+   below the NAS to the top.  This prevents the NAS from being exposed
+   and therefore, removed.  Nodes can process it without scanning
+   through unrelated labels.  This avoids redundant copies and reduces
+   RLD requirements [IhMe25-2].
+
+4.1.2.  MOVE-N-LSE Operation for HBH Preservation
+
+   The stack management network action with the MOVE-N-LSE operation is
+   added to the HBH-scoped NAS with MOVE-N = 1 to apply the HBH
+   preservation mechanism.  Each node popping the top-of-stack label and
+   processing this action brings one LSE from below the NAS to the top.
+   This prevents the HBH-scoped NAS from being exposed to the top.
+
+   However, this mechanism poses a challenge when there are MNA-
+   incapable nodes on the path.  An MNA-incapable node pops the top-of-
+   stack forwarding label and exposes the HBH-scoped NAS to the top,
+   leading to packet drop at the next hop.  To fix this, the MOVE-N-LSE
+   operation can be leveraged to bring LSEs at the preceding node of an
+   MNA-incapable node to the top.  For that purpose, a select-scoped NAS
+   is used.  Forwarding labels for upcoming MNA-incapable nodes are
+   brought to the top and the HBH-scoped NAS is never exposed.  The MNA-
+   capabilities are signaled to the ingress LER
+   [I-D.ihle-song-mpls-mna-signaling-00].  Therefore, the ingress LER
+   can place a select-scoped NAS in the stack destined for the preceding
+   node of MNA-incapable nodes.  This NAS may bring more than one label
+   to the top to skip processing on MNA-incapable nodes.
+
+   No information about MNA capabilities of neighboring nodes is
+   required in a transit node as all node capabilities are signaled to
+   the ingress LER.
+
+4.1.3.  Example
+
+   Figure 3 shows an example network of an MNA-capable node followed by
+   two MNA-incapable nodes.  Further, the MPLS stacks at hops (1) - (4)
+   and the corresponding actions on the LSEs are shown.
+
+   For clarity, in this example, a forwarding label is popped on each
+   hop.  In practice, however, this is typically not the case.  If the
+   top-of-stack label is not popped, no labels have to be moved to the
+   top-of-stack.
+
+    MNA         ¬MNA         ¬MNA          MNA
+    LSR ───L1─── LSR ───L2─── LSR ───L3─── LSR
+    R1          R2            R3           R4
+    (1)         (2)           (3)          (4)
+
+
+   MPLS label stacks:
+   (1)
+   MPLS Label L1                        -> pop + forward
+   HBH-scoped NAS with MOVE-N-LSE=1     -> process
+   Select-scoped NAS with MOVE-N-LSE=2  -> process + pop
+   MPLS Label L2                        -> move to top
+   MPLS Label L3                        -> move to top
+   MPLS Label L4                        -> move to top
+   MPLS Label L5
+
+   (2)
+   MPLS Label L2                        -> pop + forward
+   MPLS Label L3
+   MPLS Label L4
+   HBH-scoped NAS
+   MPLS Label L5
+
+   (3)
+   MPLS Label L3                        -> pop + forward
+   MPLS Label L4
+   HBH-scoped NAS
+   MPLS Label L5
+
+   (4)
+   MPLS Label L4                        -> pop + forward
+   HBH-scoped NAS with MOVE-N-LSE=1     -> process
+   MPLS Label L5                        -> move to top
+
+             Figure 3: Example using the MOVE-N-LSE operation.
+
+   For backward compatibility, the stack management network action with
+   MOVE-N = 2 for the MOVE-N-LSE operation is pushed by the ingress LER
+   as a select-scoped NAS for the LSR R1.  Further, to enable the HBH
+   preservation mechanism, the stack management action with MOVE-N = 1
+   for the MOVE-N-LSEs operation is added to the HBH-scoped NAS.  R1
+   brings three LSEs to the top-of-stack, two from the MOVE-N-LSE
+   operation in the select-scoped NAS and one from the HBH-scoped NAS.
+   At the MNA-incapable LSRs R2 and R3, the forwarding label is popped
+   without exposing the NAS to the top.  Finally, the MNA-capable LSR R4
+   processes the HBH-scoped NAS and brings one LSE from below the NAS to
+   the top.
+
+4.2.  POP-N-LSE
+
+   In this section, we give an example for the POP-N-LSE operation.
+   Another application of this operation can be found in
+   [I-D.ihle-mpls-mna-stateless-egress-protection].
+
+4.2.1.  Example
+
+   Figure 4 shows an MPLS stack containing the stack management network
+   action with POP-N = 2.  The next node that pops the top-of-stack
+   label will process the NAS containing the stack management network
+   action.  Therefore, two LSEs after the NAS, i.e., label L2 and L3
+   will be popped.  Since the NAS is exposed to the top, it is popped as
+   well.  The resulting stack contains only forwarding label L4.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L1                  | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MNA-Label=bSPL (TBA)             | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Opcode=MGMT  |Reserved |POP-N=2| MOVE-N|R|IHS|S|U| NASL=0|NAL=0|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L2                  | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L3                  | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      MPLS-Label = L4                  | TC  |S|    TTL        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+              Figure 4: Example using the POP-N-LSE operation.
+
+5.  Implementation Status
+
+   [Note to the RFC Editor - remove this section before publication, as
+   well as remove the reference to [rfc7942]]
+
+   This section records the status of known implementations of the
+   protocol defined by this specification at the time of posting of this
+   Internet-Draft, and is based on a proposal described in [rfc7942].
+   The description of implementations in this section is intended to
+   assist the IETF in its decision processes in progressing drafts to
+   RFCs.  Please note that the listing of any individual implementation
+   here does not imply endorsement by the IETF.  Furthermore, no effort
+   has been spent to verify the information presented here that was
+   supplied by IETF contributors.  This is not intended as, and must not
+   be construed to be, a catalog of available implementations or their
+   features.  Readers are advised to note that other implementations may
+   exist.
+
+5.1.  University of Tuebingen Implementation
+
+   The stack management network action defined in this document has been
+   implemented using the MOVE-N-LSE operation for HBH preservation with
+   a P4 pipeline [IhMe25-2].  The implementation code can be found at
+   https://github.com/uni-tue-kn/P4-MNA (https://github.com/uni-tue-kn/
+   P4-MNA).
+
+6.  Security Considerations
+
+   The security issues discussed in [I-D.ietf-mpls-mna-hdr] apply to
+   this document.
+
+7.  IANA Considerations
+
+   This document requests that IANA allocates a new codepoint with the
+   name "Stack Management" in the "Network Action Opcodes Registry"
+   introduced in [I-D.ietf-mpls-mna-hdr].
+
+             +============+==================+===============+
+             | MNA Opcode | Description      | Reference     |
+             +============+==================+===============+
+             | TBA1       | Stack Management | This document |
+             +------------+------------------+---------------+
+
+             Table 2: Stack Management Opcode IANA allocation.
+
+8.  References
+
+8.1.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+8.2.  Informative References
+
+   [I-D.ietf-mpls-mna-fwk]
+              Andersson, L., Bryant, S., Bocci, M., and T. Li, "MPLS
+              Network Actions (MNA) Framework", Work in Progress,
+              Internet-Draft, draft-ietf-mpls-mna-fwk-15, 27 December
+              2024, <https://datatracker.ietf.org/doc/html/draft-ietf-
+              mpls-mna-fwk-15>.
+
+   [I-D.ietf-mpls-mna-hdr]
+              Rajamanickam, J., Gandhi, R., Zigler, R., Song, H., and K.
+              Kompella, "MPLS Network Action (MNA) Sub-Stack Solution",
+              Work in Progress, Internet-Draft, draft-ietf-mpls-mna-hdr-
+              12, 3 March 2025, <https://datatracker.ietf.org/doc/html/
+              draft-ietf-mpls-mna-hdr-12>.
+
+   [I-D.ihle-mpls-mna-stateless-egress-protection]
+              Ihle, F. and M. Menth, "Stateless MNA-based Egress
+              Protection (SMEP)", Work in Progress, Internet-Draft,
+              draft-ihle-mpls-mna-stateless-egress-protection-00, 24
+              September 2024, <https://datatracker.ietf.org/doc/html/
+              draft-ihle-mpls-mna-stateless-egress-protection-00>.
+
+   [I-D.ihle-song-mpls-mna-signaling-00]
+              Ihle, F., Song, X., and M. Menth, "Signaling MNA
+              Capabilities Using IGP", Work in Progress, Internet-Draft,
+              draft-ihle-song-mpls-mna-signaling-00, 13 June 2025,
+              <https://datatracker.ietf.org/doc/html/draft-ihle-song-
+              mpls-mna-signaling-00>.
+
+   [IhMe25-2] Ihle, F. and M. Menth, "Stack Management for MPLS Network
+              Actions; Integration of Nodes with Limited Hardware
+              Capabilities", 6 June 2025.  Accepted for publication in
+              ACM/IRTF Applied Networking Research Workshop.
+
+   [rfc7942]  Sheffer, Y. and A. Farrel, "Improving Awareness of Running
+              Code: The Implementation Status Section", BCP 205,
+              RFC 7942, DOI 10.17487/RFC7942, July 2016,
+              <https://www.rfc-editor.org/rfc/rfc7942>.
+
+Acknowledgments
+
+   Thanks to Stewart Bryant for the input on facilitating SMEP with a
+   generalized POP-N network action.
+
+Authors' Addresses
+
+   Fabian Ihle
+   University of Tuebingen
+   Tuebingen
+   Germany
+   Email: fabian.ihle@uni-tuebingen.de
+
+
+   Michael Menth
+   University of Tuebingen
+   Tuebingen
+   Germany
+   Email: michael.menth@uni-tuebingen.de
