@@ -173,7 +173,7 @@ An MNA-incapable node pops the top-of-stack forwarding label and exposes the HBH
 To fix this, the MOVE-N-LSE operation can be leveraged to bring LSEs at the preceding node of an MNA-incapable node to the top.
 For that purpose, a select-scoped NAS is used.
 Forwarding labels for upcoming MNA-incapable nodes are brought to the top and the HBH-scoped NAS is never exposed.
-The MNA-capabilities are signaled to the ingress LER.
+The MNA-capabilities are signaled to the ingress LER {{?I-D.ihle-song-mpls-mna-signaling-00}}.
 Therefore, the ingress LER can place a select-scoped NAS in the stack destined for the preceding node of MNA-incapable nodes.
 This NAS may bring more than one label to the top to skip processing on MNA-incapable nodes.
 
