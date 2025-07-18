@@ -236,7 +236,7 @@ The security issues discussed in {{?I-D.ietf-mpls-mna-hdr}} apply to this docume
 
 # IANA Considerations
 
-This document requests that IANA allocates a new codepoint with the name "Stack Management" in the "Network Action Opcodes Registry" introduced in {{?I-D.ietf-mpls-mna-hdr}}.
+This document requests that IANA allocates a new codepoint with the name "Stack Management" in the "Network Action Opcodes registry" introduced in {{?I-D.ietf-mpls-mna-hdr}}.
 
 | MNA Opcode | Description      | Reference     |
 | ---------- | ---------------- | ------------- |
