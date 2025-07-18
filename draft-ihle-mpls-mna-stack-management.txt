@@ -5,7 +5,7 @@
 Multiprotocol Label Switching                                    F. Ihle
 Internet-Draft                                                  M. Menth
 Intended status: Standards Track                 University of Tuebingen
-Expires: 15 December 2025                                   13 June 2025
+Expires: 19 January 2026                                    18 July 2025
 
 
                 MPLS Network Action for Stack Management
@@ -57,7 +57,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 December 2025.
+   This Internet-Draft will expire on 19 January 2026.
 
 Copyright Notice
 
@@ -408,7 +408,7 @@ Table of Contents
 7.  IANA Considerations
 
    This document requests that IANA allocates a new codepoint with the
-   name "Stack Management" in the "Network Action Opcodes Registry"
+   name "Stack Management" in the "Network Action Opcodes registry"
    introduced in [I-D.ietf-mpls-mna-hdr].
 
              +============+==================+===============+
@@ -451,9 +451,9 @@ Table of Contents
    [I-D.ihle-mpls-mna-stateless-egress-protection]
               Ihle, F. and M. Menth, "Stateless MNA-based Egress
               Protection (SMEP)", Work in Progress, Internet-Draft,
-              draft-ihle-mpls-mna-stateless-egress-protection-00, 24
-              September 2024, <https://datatracker.ietf.org/doc/html/
-              draft-ihle-mpls-mna-stateless-egress-protection-00>.
+              draft-ihle-mpls-mna-stateless-egress-protection-01, 13
+              June 2025, <https://datatracker.ietf.org/doc/html/draft-
+              ihle-mpls-mna-stateless-egress-protection-01>.
 
    [I-D.ihle-song-mpls-mna-signaling-00]
               Ihle, F., Song, X., and M. Menth, "Signaling MNA
